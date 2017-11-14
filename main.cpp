@@ -12,12 +12,13 @@ using boost::filesystem::directory_iterator;
 
 int main()
 {
+
+    ofstream log_stream;
+    log_stream.open (log_file, fstream::app);
+    ThreadPool tp(& file_handler, & log_stream, 10);
+
     while (true)
     {
-        ofstream log_stream;
-        log_stream.open (log_file);
-        ThreadPool tp(& file_handler, & log_stream, 10);
-
         cout << "Enter a global path to target folder: " << endl;
         string str_path;
         getline(cin, str_path);
@@ -36,7 +37,7 @@ int main()
         {
             cout << "Provided path " << p << " is not a directory - exiting" << endl;
             break;
-        }
-        log_stream.close();
+        }    
     }
+    log_stream.close();
 }

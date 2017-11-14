@@ -1,28 +1,25 @@
 #include "thread_pool.h"
 
-static bool cond_ready = false;
-
-
 string file_handler(path p)
 {
-	string file_info = string(p.stem().string()) + " ";
-	file_info += to_string(file_size(p)) + " ";
+	string file_info = "File " + p.stem().string();
+	file_info += " size " + to_string(file_size(p));
 	
 	ifstream file;
 	file.open(p.c_str());
-    unsigned int checksum(0), shift(0);
-    for (unsigned int ch = file.get(); file; ch = file.get()) 
+	unsigned int checksum(0), shift(0);
+	for (unsigned int ch = file.get(); file; ch = file.get()) 
 	{
-        checksum += (ch << shift);
-        shift += 8;
-        if (shift == 32) shift = 0;
-    }
+		checksum += (ch << shift);
+		shift += 8;
+		if (shift == 32) shift = 0;
+	}
 	file.close();
 
-	file_info += to_string(checksum) + " ";
+	file_info += " checksum " + to_string(checksum);
 
 	time_t lt = last_write_time(p);
-	file_info += ctime(&lt);
+	file_info += " date " + string(ctime(&lt));
 
     return file_info;
 }
@@ -43,7 +40,7 @@ void ThreadPool::taskWorker()
 	while(true)
 	{
 		unique_lock<mutex> lock(m_active);
-		active_cond.wait(lock, [] () {return cond_ready;});
+		active_cond.wait(lock, [this] () {return cond_ready;});
 
 		task_wrapper * task = taskGet();
 		if (task)

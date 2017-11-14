@@ -35,16 +35,18 @@ class ThreadPool
 	mutex md;
     mutex m_active;
     condition_variable active_cond;
+	bool cond_ready = false;
     ostream * out_taget;
 	string (*task_function)(path);
 	deque<task_wrapper> task_deque;
 
+    void taskWorker();
+    void taskDone(task_wrapper * task);
+    task_wrapper * taskGet();
+
     public:
     ThreadPool(string (*t_function)(path), ostream * o_taget, int t_count);
-    void taskWorker();
     void pushTasks(priority_queue<path> * input_q);
-    task_wrapper * taskGet();
-    void taskDone(task_wrapper * task);
 };
 
 #endif
