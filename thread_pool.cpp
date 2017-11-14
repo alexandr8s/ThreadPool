@@ -45,7 +45,7 @@ void ThreadPool::taskWorker()
 		unique_lock<mutex> lock(m_active);
 		active_cond.wait(lock, [] () {return cond_ready;});
 
-		task_struct * task = taskGet();
+		task_wrapper * task = taskGet();
 		if (task)
 		{
 			string out = task_function(task->input);
@@ -63,28 +63,28 @@ void ThreadPool::pushTasks(priority_queue<path> * input_q)
 {
 	while (!input_q->empty())
 	{
-		task_deque.push_front(task_struct(input_q->top()));
+		task_deque.push_front(task_wrapper(input_q->top()));
 		input_q->pop();
 	}
 	cond_ready = true;
 	active_cond.notify_all();
 }
 	
-ThreadPool::task_struct * ThreadPool::taskGet()
+ThreadPool::task_wrapper * ThreadPool::taskGet()
 {
 	std::lock_guard<std::mutex> lock(ms);
-	for (auto & task_struct : task_deque)
+	for (auto & task_wrapper : task_deque)
 	{
-		if (!task_struct.in_prog)
+		if (!task_wrapper.in_prog)
 		{
-			task_struct.in_prog = true;
-			return & task_struct;
+			task_wrapper.in_prog = true;
+			return & task_wrapper;
 		}
 	}
 	return nullptr;
 }
 
-void ThreadPool::taskDone(task_struct * task)
+void ThreadPool::taskDone(task_wrapper * task)
 {
 	std::lock_guard<std::mutex> lock(md);
 	task->done = true;
