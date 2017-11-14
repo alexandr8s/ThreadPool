@@ -1,38 +1,39 @@
 #include "thread_pool.h"
 
-string file_handler(path p)
-{
-	string file_info = "File " + p.stem().string();
-	file_info += " size " + to_string(file_size(p));
-	
-	ifstream file;
-	file.open(p.c_str());
-	unsigned int checksum(0), shift(0);
-	for (unsigned int ch = file.get(); file; ch = file.get()) 
-	{
-		checksum += (ch << shift);
-		shift += 8;
-		if (shift == 32) shift = 0;
-	}
-	file.close();
-
-	file_info += " checksum " + to_string(checksum);
-
-	time_t lt = last_write_time(p);
-	file_info += " date " + string(ctime(&lt));
-
-    return file_info;
-}
-
-
-ThreadPool::ThreadPool(string (*t_function)(path), ostream * o_taget, int thread_count = 10):
+ThreadPool::ThreadPool(string (*t_function)(string), ostream * o_taget, int thread_count):
 task_function(t_function), out_taget(o_taget)
 {
+	cond_ready = false;
 	for(int i = 0; i < thread_count; i++)
 	{
 		thread t(&ThreadPool::taskWorker, this);
 		t.detach();
 	}
+}
+	
+void ThreadPool::pushTasks(priority_queue<string> * input_q)
+{
+	while (!input_q->empty())
+	{
+		task_deque.push_front(task_wrapper(input_q->top()));
+		input_q->pop();
+	}
+	cond_ready = true;
+	active_cond.notify_all();
+}
+	
+ThreadPool::task_wrapper * ThreadPool::taskGet()
+{
+	std::lock_guard<std::mutex> lock(m_get);
+	for (auto & task_wrapper : task_deque)
+	{
+		if (!task_wrapper.in_prog)
+		{
+			task_wrapper.in_prog = true;
+			return & task_wrapper;
+		}
+	}
+	return nullptr;
 }
 
 void ThreadPool::taskWorker()
@@ -55,41 +56,16 @@ void ThreadPool::taskWorker()
 		}
 	}
 }
-	
-void ThreadPool::pushTasks(priority_queue<path> * input_q)
-{
-	while (!input_q->empty())
-	{
-		task_deque.push_front(task_wrapper(input_q->top()));
-		input_q->pop();
-	}
-	cond_ready = true;
-	active_cond.notify_all();
-}
-	
-ThreadPool::task_wrapper * ThreadPool::taskGet()
-{
-	std::lock_guard<std::mutex> lock(ms);
-	for (auto & task_wrapper : task_deque)
-	{
-		if (!task_wrapper.in_prog)
-		{
-			task_wrapper.in_prog = true;
-			return & task_wrapper;
-		}
-	}
-	return nullptr;
-}
 
 void ThreadPool::taskDone(task_wrapper * task)
 {
-	std::lock_guard<std::mutex> lock(md);
+	std::lock_guard<std::mutex> lock(m_done);
 	task->done = true;
 	while (!task_deque.empty())
 	{
 		if (task_deque.front().done)
 		{
-			*out_taget << task_deque.front().output;
+			*out_taget << task_deque.front().output << flush;
 			task_deque.pop_front();
 		}
 		else

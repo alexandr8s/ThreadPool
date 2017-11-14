@@ -8,13 +8,8 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <boost/filesystem.hpp>
 
 using namespace std;
-using boost::filesystem::path;
-using boost::filesystem::file_size;
-
-string file_handler(path p);
 
 class ThreadPool
 {
@@ -23,21 +18,21 @@ class ThreadPool
 	{
 		bool in_prog;
 		bool done;
-		path input;
+		string input;
 		string output;
 		
-		task_wrapper(path p):
+		task_wrapper(string p):
 		input(p), output(""), in_prog(false), done(false)
 		{}
 	};
 
-    mutex ms;
-	mutex md;
+	bool cond_ready;
+    mutex m_get;
+	mutex m_done;
     mutex m_active;
     condition_variable active_cond;
-	bool cond_ready = false;
     ostream * out_taget;
-	string (*task_function)(path);
+	string (*task_function)(string);
 	deque<task_wrapper> task_deque;
 
     void taskWorker();
@@ -45,8 +40,8 @@ class ThreadPool
     task_wrapper * taskGet();
 
     public:
-    ThreadPool(string (*t_function)(path), ostream * o_taget, int t_count);
-    void pushTasks(priority_queue<path> * input_q);
+    ThreadPool(string (*t_function)(string), ostream * o_taget = & cout, int t_count = 10);
+    void pushTasks(priority_queue<string> * input_q);
 };
 
 #endif

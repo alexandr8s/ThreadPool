@@ -12,4 +12,4 @@ Main task:
 
 
 Compile with boost:
-g++ main.cpp thread_pool.cpp -std=c++11 -I ../boost_1_65_1 -L ../boost_1_65_1/stage/lib/ -l boost_filesystem -l boost_system
+g++ main.cpp thread_pool.cpp task_function.cpp -std=c++11 -I ../boost_1_65_1 -L ../boost_1_65_1/stage/lib/ -l boost_filesystem -l boost_system
