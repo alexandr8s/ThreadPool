@@ -14,7 +14,6 @@ using namespace std;
 using boost::filesystem::path;
 using boost::filesystem::file_size;
 
-unsigned int calculate_checksum(path p);
 string file_handler(path p);
 
 class ThreadPool
