@@ -27,11 +27,11 @@ class ThreadPool
 	};
 
 	bool cond_ready;
-    mutex m_get;
+	mutex m_get;
 	mutex m_done;
-    mutex m_active;
-    condition_variable active_cond;
-    ostream * out_taget;
+	mutex m_active;
+	condition_variable active_cond;
+	ostream * out_taget;
 	string (*task_function)(string);
 	deque<task_wrapper> task_deque;
 

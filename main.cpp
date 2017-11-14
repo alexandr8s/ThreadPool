@@ -1,6 +1,8 @@
 #include <fstream>
+#include <boost/filesystem.hpp>
 #include "task_function.h"
 #include "thread_pool.h"
+
 
 #define log_file "log.txt"
 
