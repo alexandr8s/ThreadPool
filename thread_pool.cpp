@@ -10,7 +10,12 @@ task_function(t_function), out_taget(o_taget)
 		t.detach();
 	}
 }
-	
+
+ThreadPool::~ThreadPool()
+{
+	while(!isReady());
+}
+
 void ThreadPool::pushTasks(priority_queue<string> * input_q)
 {
 	while (!input_q->empty())
@@ -24,7 +29,7 @@ void ThreadPool::pushTasks(priority_queue<string> * input_q)
 	
 ThreadPool::task_wrapper * ThreadPool::taskGet()
 {
-	std::lock_guard<std::mutex> lock(m_get);
+	std::lock_guard<mutex> lock(m_get);
 	for (auto & task_wrapper : task_deque)
 	{
 		if (!task_wrapper.in_prog)
@@ -34,6 +39,11 @@ ThreadPool::task_wrapper * ThreadPool::taskGet()
 		}
 	}
 	return nullptr;
+}
+
+bool ThreadPool::isReady()
+{
+	return task_deque.empty();
 }
 
 void ThreadPool::taskWorker()
@@ -59,7 +69,7 @@ void ThreadPool::taskWorker()
 
 void ThreadPool::taskDone(task_wrapper * task)
 {
-	std::lock_guard<std::mutex> lock(m_done);
+	std::lock_guard<mutex> lock(m_done);
 	task->done = true;
 	while (!task_deque.empty())
 	{

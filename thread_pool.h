@@ -22,7 +22,7 @@ class ThreadPool
 		string output;
 		
 		task_wrapper(string p):
-		input(p), output(""), in_prog(false), done(false)
+		input(p), output(), in_prog(false), done(false)
 		{}
 	};
 
@@ -41,7 +41,9 @@ class ThreadPool
 
     public:
     ThreadPool(string (*t_function)(string), ostream * o_taget = & cout, int t_count = 10);
+	~ThreadPool();
     void pushTasks(priority_queue<string> * input_q);
+	bool isReady();
 };
 
 #endif
