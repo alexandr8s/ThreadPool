@@ -6,6 +6,7 @@
 #include <queue>
 #include <deque>
 #include <thread>
+#include <vector>
 #include <mutex>
 #include <condition_variable>
 
@@ -27,6 +28,7 @@ class ThreadPool
 	};
 
 	bool cond_ready;
+	bool destroy_threads;
 	mutex m_get;
 	mutex m_done;
 	mutex m_active;
@@ -34,6 +36,7 @@ class ThreadPool
 	ostream * out_taget;
 	string (*task_function)(string);
 	deque<task_wrapper> task_deque;
+	vector<thread> t_vector;
 
     void taskWorker();
     void taskDone(task_wrapper * task);

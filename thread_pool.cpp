@@ -4,16 +4,21 @@ ThreadPool::ThreadPool(string (*t_function)(string), ostream * o_taget, int thre
 task_function(t_function), out_taget(o_taget)
 {
 	cond_ready = false;
+	destroy_threads = false;
 	for(int i = 0; i < thread_count; i++)
 	{
-		thread t(&ThreadPool::taskWorker, this);
-		t.detach();
+		t_vector.emplace_back(thread(&ThreadPool::taskWorker, this));
 	}
 }
 
 ThreadPool::~ThreadPool()
 {
-	while(!isReady());
+	destroy_threads = true;
+	active_cond.notify_all();
+	for ( auto & t : t_vector)
+	{
+		t.join();
+	}
 }
 
 void ThreadPool::pushTasks(priority_queue<string> * input_q)
@@ -48,10 +53,10 @@ bool ThreadPool::isReady()
 
 void ThreadPool::taskWorker()
 {
-	while(true)
+	while(!destroy_threads)
 	{
 		unique_lock<mutex> lock(m_active);
-		active_cond.wait(lock, [this] () {return cond_ready;});
+		active_cond.wait(lock, [this] () {return cond_ready || destroy_threads;});
 
 		task_wrapper * task = taskGet();
 		if (task)
