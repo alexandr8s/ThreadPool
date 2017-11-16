@@ -57,6 +57,7 @@ void ThreadPool::taskWorker()
 	{
 		unique_lock<mutex> lock(m_active);
 		active_cond.wait(lock, [this] () {return cond_ready || destroy_threads;});
+		if (destroy_threads) break;
 
 		task_wrapper * task = taskGet();
 		if (task)
